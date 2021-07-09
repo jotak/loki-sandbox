@@ -1,0 +1,36 @@
+server:
+  log_level: info
+  http_listen_port: 8080
+
+client:
+  url: http://loki-gateway/loki/api/v1/push
+
+positions:
+  filename: /run/promtail/positions.yaml
+
+scrape_configs:
+  # See also https://github.com/grafana/loki/blob/master/production/ksonnet/promtail/scrape_config.libsonnet for reference
+  # Pods with a label 'app.kubernetes.io/name'
+  - job_name: goflow
+    pipeline_stages:
+    - regex:
+        expression: "stdout F (?P<json>.*)$"
+    - json:
+        source: json
+        expressions:
+          SrcAddr:
+          DstAddr:
+          K8SSrcPodNode:
+          K8SSrcPodNamespace:
+          K8SDstPodName:
+          K8SDstPodNamespace:
+          Bytes:
+    - labels:
+        SrcAddr:
+        DstAddr:
+        K8SSrcPodNode:
+        K8SSrcPodNamespace:
+        K8SDstPodName:
+        K8SDstPodNamespace:
+    - output:
+        source: Bytes
