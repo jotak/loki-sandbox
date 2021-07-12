@@ -55,6 +55,10 @@ Add datasource => Loki => http://loki:3100/
 ![top namespaces](./screenshot-top-namespaces.png)
 _Top namespaces:_ `topk(5, (sum by(K8SSrcPodNamespace) ( rate({ app="goflow" } [5m]) )))`
 
+(it gives the top namespaces in terms of number of flow entries.
+To get for instance the top 5 namespaces in terms of byte rate, run: `topk(5, (sum by(K8SSrcPodNamespace) ( rate({app="goflow"} | json | Type = "NETFLOW_V5" | unwrap Bytes [1m]) )))` )
+
+
 ## Other reads/stuff
 
 See also:
