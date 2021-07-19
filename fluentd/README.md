@@ -1,5 +1,7 @@
 ## Fluentd + Loki
 
+First, set up ovn-k in Kind: see https://github.com/ovn-org/ovn-kubernetes/blob/master/docs/kind.md
+
 ```bash
 kubectl apply -f ./fluentd.yaml
 
@@ -29,7 +31,7 @@ Example of queries:
 
 `topk(10, (sum by(src) ( rate({ source="netflow" } | logfmt | __error__="" | unwrap in_bytes [1m]) )))`
 
-- Top 10 destinations for a given source  1 min-rate):
+- Top 10 destinations for a given source (1 min-rate):
 
 `topk(10, (sum by(dst) ( rate({ source="netflow",src="10.244.1.12" } | logfmt | __error__="" | unwrap in_bytes [1m]) )))`
 
