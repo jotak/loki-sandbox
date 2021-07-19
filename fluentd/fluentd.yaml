@@ -1,0 +1,79 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluentd-conf
+data:
+  fluent.conf: |
+    <system>
+      log_level debug
+    </system>
+
+    <source>
+      @type netflow
+      @log_level trace
+      tag netflow.event
+      bind 0.0.0.0
+      port 2055
+      cache_ttl 6000
+      versions [5, 9]
+    </source>
+
+    <match netflow.event>
+      @type loki
+      @log_level debug
+      url "#{ENV['LOKI_URL']}"
+      username "#{ENV['LOKI_USERNAME']}"
+      password "#{ENV['LOKI_PASSWORD']}"
+      extra_labels {"source":"netflow"}
+      flush_interval 10s
+      flush_at_shutdown true
+      buffer_chunk_limit 1m
+      <label>
+        worker fluentd_worker
+        src $.ipv4_src_addr
+        dst $.ipv4_dst_addr
+      </label>
+    </match>
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fluentd
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fluentd
+  template:
+    metadata:
+      labels:
+        app: fluentd
+    spec:
+      volumes:
+        - name: config-vol
+          configMap:
+            name: fluentd-conf
+      containers:
+        - name: fluentd
+          image: quay.io/jotak/fluentd-netflow-loki:latest
+          imagePullPolicy: Always
+          env:
+          - name: LOKI_URL
+            value: "http://loki:3100"
+          volumeMounts:
+            - mountPath: /fluentd/etc
+              name: config-vol
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fluentd
+  labels:
+    app: fluentd
+spec:
+  ports:
+  - port: 2055
+    protocol: UDP
+  selector:
+    app: fluentd
+---
