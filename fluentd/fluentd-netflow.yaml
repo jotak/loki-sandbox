@@ -15,7 +15,6 @@ data:
       bind 0.0.0.0
       port 2055
       cache_ttl 6000
-      versions [5, 9]
     </source>
 
     <match netflow.event>
@@ -24,7 +23,7 @@ data:
       url "#{ENV['LOKI_URL']}"
       username "#{ENV['LOKI_USERNAME']}"
       password "#{ENV['LOKI_PASSWORD']}"
-      extra_labels {"source":"netflow"}
+      extra_labels {"source":"flow"}
       flush_interval 10s
       flush_at_shutdown true
       buffer_chunk_limit 1m
@@ -55,7 +54,7 @@ spec:
             name: fluentd-conf
       containers:
         - name: fluentd
-          image: quay.io/jotak/fluentd-netflow-loki:latest
+          image: quay.io/jotak/fluentd-flows-loki:netflow
           imagePullPolicy: Always
           env:
           - name: LOKI_URL

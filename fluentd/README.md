@@ -3,10 +3,12 @@
 First, set up ovn-k in Kind: see https://github.com/ovn-org/ovn-kubernetes/blob/master/docs/kind.md
 
 ```bash
-kubectl apply -f ./fluentd.yaml
+kubectl apply -f ./fluentd-netflow.yaml
 
-COLLECTOR_IP=`kubectl get svc fluentd -ojsonpath='{.spec.clusterIP}'` && echo $COLLECTOR_IP
-kubectl set env daemonset/ovnkube-node -c ovnkube-node -n ovn-kubernetes OVN_NETFLOW_TARGETS="$COLLECTOR_IP:2055"
+FD_IP=`kubectl get svc fluentd -ojsonpath='{.spec.clusterIP}'` && echo $FD_IP
+kubectl set env daemonset/ovnkube-node -c ovnkube-node -n ovn-kubernetes OVN_NETFLOW_TARGETS="$FD_IP:2055"
+# or:
+kubectl set env daemonset/ovnkube-node -c ovnkube-node -n ovn-kubernetes OVN_IPFIX_TARGETS="$FD_IP:2055"
 
 helm upgrade --install loki grafana/loki-stack --set promtail.enabled=false
 ```
@@ -17,8 +19,8 @@ See also https://grafana.com/docs/loki/latest/installation/helm/#deploy-grafana-
 
 ```bash
 helm install loki-grafana grafana/grafana
-oc get secret loki-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
-oc port-forward svc/loki-grafana 3000:80
+kubectl get secret loki-grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+kubectl port-forward svc/loki-grafana 3000:80
 ```
 
 Open http://localhost:3000/
@@ -41,8 +43,8 @@ Example of queries:
 E.g. with podman / user `jotak` (different user? => update also the image name in deployment yaml)
 
 ```bash
-podman build -t quay.io/jotak/fluentd-netflow-loki .
-build -t quay.io/jotak/fluentd-netflow-loki .
+podman build -t quay.io/jotak/fluentd-flows-loki:netflow .
+podman push quay.io/jotak/fluentd-flows-loki:netflow
 ```
 
 ## TODO
